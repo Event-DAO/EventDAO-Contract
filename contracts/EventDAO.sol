@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.1;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -16,20 +16,22 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
   using SafeMath for uint256;
 
     /** MINTING **/
-  uint256 public MAX_PASS_CARD_PER_WALLET;
-  uint256 public MAX_VIP_CARD_PER_WALLET;
+  uint8 public MAX_PASS_CARD_PER_WALLET;
+  uint8 public MAX_VIP_CARD_PER_WALLET;
   uint256 public VIP_CARD_PRICE;
   uint256 public PASS_CARD_PRICE;
   uint256 public PASS_CARD_DIS_PRICE;
-  uint256 public MAX_PASS_CARD_SUPPLY;
-  uint256 public MAX_VIP_CARD_SUPPLY;
-  uint256 public MAX_TEAM_CARD_SUPPLY;
-  uint256 public MAX_SUPPLY;
-  uint256 public MAX_PASS_CARD_RESERVED_SUPPLY;
-  uint256 public MAX_VIP_CARD_RESERVED_SUPPLY;
-  uint256 public MAX_MULTIMINT;
-  uint256 public MAX_PASS_CARD_WHITELIST_SUPPLY;
-  uint256 public MAX_VIP_CARD_WHITELIST_SUPPLY;
+  uint16 public MAX_PASS_CARD_SUPPLY;
+  uint16 public MAX_VIP_CARD_SUPPLY;
+  uint16 public MAX_TEAM_CARD_SUPPLY;
+  uint16 public MAX_SUPPLY;
+  uint16 public MAX_PASS_CARD_RESERVED_SUPPLY;
+  uint16 public MAX_VIP_CARD_RESERVED_SUPPLY;
+  uint8 public MAX_MULTIMINT;
+  uint16 public MAX_PASS_CARD_WHITELIST_SUPPLY;
+  uint16 public MAX_VIP_CARD_WHITELIST_SUPPLY;
+
+  string private customBaseURI;
 
   PaymentSplitter private _splitter;
 
@@ -99,35 +101,35 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     VIP_CARD_PRICE = _price;
   }
 
-  function setVipCardLimitPerWallet(uint256 maxPerWallet) external onlyOwner {
+  function setVipCardLimitPerWallet(uint8 maxPerWallet) external onlyOwner {
     MAX_VIP_CARD_PER_WALLET = maxPerWallet;
   }
 
-  function setPassCardLimitPerWallet(uint256 maxPerWallet) external onlyOwner {
+  function setPassCardLimitPerWallet(uint8 maxPerWallet) external onlyOwner {
     MAX_PASS_CARD_PER_WALLET = maxPerWallet;
   }
 
-  function setMultiMint(uint256 maxMultiMint) external onlyOwner {
+  function setMultiMint(uint8 maxMultiMint) external onlyOwner {
     MAX_MULTIMINT = maxMultiMint;
   }
 
-  function setMaxPassCardWhitelistSupply(uint256 maxSupply) external onlyOwner {
+  function setMaxPassCardWhitelistSupply(uint16 maxSupply) external onlyOwner {
     MAX_PASS_CARD_WHITELIST_SUPPLY = maxSupply;
   }
 
-  function setMaxVipCardWhitelistSupply(uint256 maxSupply) external onlyOwner {
+  function setMaxVipCardWhitelistSupply(uint16 maxSupply) external onlyOwner {
     MAX_VIP_CARD_WHITELIST_SUPPLY = maxSupply;
   }
 
-  mapping(address => uint256) private passCardMintCountMap;
-  mapping(address => uint256) private vipCardMintCountMap;
+  mapping(address => uint16) private passCardMintCountMap;
+  mapping(address => uint16) private vipCardMintCountMap;
   uint8 teamCardMintCount;
 
-  function allowedPassCardMintCount(address minter) public view returns (uint256) {
+  function allowedPassCardMintCount(address minter) public view returns (uint16) {
     return MAX_PASS_CARD_PER_WALLET - passCardMintCountMap[minter];
   }
 
-  function updatePassCardMintCount(address minter, uint256 count) private {
+  function updatePassCardMintCount(address minter, uint16 count) private {
     passCardMintCountMap[minter] += count;
   }
 
@@ -135,7 +137,7 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     return MAX_VIP_CARD_PER_WALLET - vipCardMintCountMap[minter];
   }
 
-  function updateVipCardMintCount(address minter, uint256 count) private {
+  function updateVipCardMintCount(address minter, uint16 count) private {
     vipCardMintCountMap[minter] += count;
   }
 
@@ -175,52 +177,69 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     return vipCardWhitelistMintCounter.current();
   }
 
-  //TODO : HATA FIRLATMIYOR GASFEE ALIYOR AMA MINT ETMIYOR..
-  function mintCard(uint256 count) public payable nonReentrant {
+  function mintCard(uint16 count) public payable nonReentrant {
+    require(stage_!=DaoStage.INACTIVE , "STAGE INACTIVE" );
     if(stage_==DaoStage.PASS) {
-      mintPassCard(count);
+      require(totalPassCardSupply() + count - 1 < MAX_PASS_CARD_SUPPLY - MAX_PASS_CARD_RESERVED_SUPPLY, "Exceeds max supply");
+      require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
+      require(msg.value >= (count==2 ? PASS_CARD_DIS_PRICE * count : PASS_CARD_PRICE) , "Insufficient payment");
+
+      if (allowedPassCardMintCount(_msgSender()) > 0) {
+        updatePassCardMintCount(_msgSender(), count);
+      } else {
+        revert("Minting limit exceeded");
+      }
     } else if (stage_==DaoStage.VIP) {
-      mintVipCard(count);
+      require(totalVipCardSupply() + count - 1 < MAX_VIP_CARD_SUPPLY - MAX_VIP_CARD_RESERVED_SUPPLY, "Exceeds max supply");
+      require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
+      require(msg.value >= VIP_CARD_PRICE , "Insufficient payment");
+
+      if (allowedVipCardMintCount(_msgSender()) > 0) {
+        updateVipCardMintCount(_msgSender(), count);
+      } else {
+        revert("Minting limit exceeded");
+      }
+
+      for (uint256 i = 0; i < count; i++) {
+        vipCardSupplyCounter.increment();
+        _safeMint(_msgSender(), MAX_PASS_CARD_SUPPLY + MAX_VIP_CARD_RESERVED_SUPPLY + totalVipCardSupply());
+      }
+    } else if (stage_==DaoStage.WHITELIST_PASS) {
+      require(totalPassCardWhitelistMints() + count - 1 < MAX_PASS_CARD_WHITELIST_SUPPLY, "Exceeds whitelist supply");
+      require(totalPassCardSupply() < MAX_PASS_CARD_SUPPLY - MAX_PASS_CARD_RESERVED_SUPPLY + count - 1, "Exceeds max supply");
+      require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
+      require(msg.value >= (count==2 ? PASS_CARD_DIS_PRICE * count : PASS_CARD_PRICE) , "Insufficient payment");
+
+      if (allowedPassCardMintCount(_msgSender()) > 0) {
+        updatePassCardMintCount(_msgSender(), count);
+      } else {
+        revert("Minting limit exceeded");
+      }
+
+      for (uint256 i = 0; i < count; i++) {
+        passCardSupplyCounter.increment();
+        passCardWhitelistMintCounter.increment();
+        _safeMint(_msgSender(), MAX_PASS_CARD_RESERVED_SUPPLY + totalPassCardSupply());
+      }
+    } else if (stage_==DaoStage.WHITELIST_VIP) {
+      require(totalVipCardWhitelistMints() + count - 1 < MAX_VIP_CARD_WHITELIST_SUPPLY, "Exceeds whitelist supply");
+      require(totalVipCardSupply() < MAX_VIP_CARD_SUPPLY - MAX_VIP_CARD_RESERVED_SUPPLY + count - 1, "Exceeds max supply");
+      require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
+      require(msg.value >= VIP_CARD_PRICE * count, "Insufficient payment");
+
+      if (allowedVipCardMintCount(_msgSender()) > 0) {
+        updateVipCardMintCount(_msgSender(), count);
+      } else {
+        revert("Minting limit exceeded");
+      }
+
+      for (uint256 i = 0; i < count; i++) {
+        vipCardSupplyCounter.increment();
+        vipCardWhitelistMintCounter.increment();
+        _safeMint(_msgSender(), MAX_PASS_CARD_SUPPLY + MAX_VIP_CARD_RESERVED_SUPPLY + totalVipCardSupply());
+      }
     }
-  }
-
-  function mintPassCard(uint256 count) public payable nonReentrant {
-    require(stage_ == DaoStage.PASS, "Sale not active");
-    require(totalPassCardSupply() + count - 1 < MAX_PASS_CARD_SUPPLY - MAX_PASS_CARD_RESERVED_SUPPLY, "Exceeds max supply");
-    require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
-    require(msg.value >= (count==2 ? PASS_CARD_DIS_PRICE : PASS_CARD_PRICE) * count, "Insufficient payment");
-
-    if (allowedPassCardMintCount(_msgSender()) > 0) {
-      updatePassCardMintCount(_msgSender(), count);
-    } else {
-      revert("Minting limit exceeded");
-    }
-
-    for (uint256 i = 0; i < count; i++) {
-      passCardSupplyCounter.increment();
-      _safeMint(_msgSender(), MAX_PASS_CARD_RESERVED_SUPPLY + totalPassCardSupply());
-    }
-
-    payable(_splitter).transfer(msg.value);
-  }
-
-  function mintVipCard(uint256 count) public payable nonReentrant {
-    require(stage_ == DaoStage.VIP, "Vip Sale not active");
-    require(totalVipCardSupply() + count - 1 < MAX_VIP_CARD_SUPPLY - MAX_VIP_CARD_RESERVED_SUPPLY, "Exceeds max supply");
-    require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
-    require(msg.value >= VIP_CARD_PRICE , "Insufficient payment");
-
-    if (allowedVipCardMintCount(_msgSender()) > 0) {
-      updateVipCardMintCount(_msgSender(), count);
-    } else {
-      revert("Minting limit exceeded");
-    }
-
-    for (uint256 i = 0; i < count; i++) {
-      vipCardSupplyCounter.increment();
-      _safeMint(_msgSender(), MAX_PASS_CARD_SUPPLY + MAX_VIP_CARD_RESERVED_SUPPLY + totalVipCardSupply());
-    }
-
+    
     payable(_splitter).transfer(msg.value);
   }
 
@@ -272,55 +291,9 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     }
   }
 
-  function mintPassCardWhitelist(uint256 count, bytes calldata signature) public payable requiresWhitelist(signature) nonReentrant {
-    require(stage_ == DaoStage.WHITELIST_PASS, "Pass Sale not active");
-    require(totalPassCardWhitelistMints() + count - 1 < MAX_PASS_CARD_WHITELIST_SUPPLY, "Exceeds whitelist supply");
-    require(totalPassCardSupply() < MAX_PASS_CARD_SUPPLY - MAX_PASS_CARD_RESERVED_SUPPLY + count - 1, "Exceeds max supply");
-    require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
-    require(msg.value >= (count==2 ? PASS_CARD_DIS_PRICE : PASS_CARD_PRICE) * count, "Insufficient payment");
-
-    if (allowedPassCardMintCount(_msgSender()) > 0) {
-      updatePassCardMintCount(_msgSender(), count);
-    } else {
-      revert("Minting limit exceeded");
-    }
-
-    for (uint256 i = 0; i < count; i++) {
-      passCardSupplyCounter.increment();
-      passCardWhitelistMintCounter.increment();
-      _safeMint(_msgSender(), MAX_PASS_CARD_RESERVED_SUPPLY + totalPassCardSupply());
-    }
-
-    payable(_splitter).transfer(msg.value);
-  }
-
-  function mintVipCardWhitelist(uint256 count, bytes calldata signature) public payable requiresWhitelist(signature) nonReentrant {
-    require(stage_ == DaoStage.WHITELIST_VIP, "VIP Sale not active");
-    require(totalVipCardWhitelistMints() + count - 1 < MAX_VIP_CARD_WHITELIST_SUPPLY, "Exceeds whitelist supply");
-    require(totalVipCardSupply() < MAX_VIP_CARD_SUPPLY - MAX_VIP_CARD_RESERVED_SUPPLY + count - 1, "Exceeds max supply");
-    require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
-    require(msg.value >= VIP_CARD_PRICE * count, "Insufficient payment");
-
-    if (allowedVipCardMintCount(_msgSender()) > 0) {
-      updateVipCardMintCount(_msgSender(), count);
-    } else {
-      revert("Minting limit exceeded");
-    }
-
-    for (uint256 i = 0; i < count; i++) {
-      vipCardSupplyCounter.increment();
-      vipCardWhitelistMintCounter.increment();
-      _safeMint(_msgSender(), MAX_PASS_CARD_SUPPLY + MAX_VIP_CARD_RESERVED_SUPPLY + totalVipCardSupply());
-    }
-
-    payable(_splitter).transfer(msg.value);
-  }
-
   function checkWhitelist(bytes calldata signature) public view requiresWhitelist(signature) returns (bool) {
     return true;
   }
-
-  string private customBaseURI;
 
   function baseTokenURI() public view returns (string memory) {
     return customBaseURI;
@@ -330,15 +303,11 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     customBaseURI = customBaseURI_;
   }
 
-  function _baseURI() internal view virtual override returns (string memory) {
-    return customBaseURI;
-  }
-
-  function daoStage() external view virtual returns (DaoStage stage) {
+  function daoStage() external view returns (DaoStage stage) {
     return stage_;
   }
 
-  function mintPrice(uint64 count) external view virtual returns (uint256 price_) {
+  function mintPrice(uint64 count) external view returns (uint256 price_) {
     require(count < MAX_MULTIMINT,"Exceeds multimint count.");
     uint256 activePrice = VIP_CARD_PRICE;
     if (stage_ == DaoStage.PASS) {
@@ -348,7 +317,7 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     return activePrice*count;
   }
 
-  function release(address payable account) public virtual onlyOwner {
+  function release(address payable account) public onlyOwner {
     _splitter.release(account);
   }
 }

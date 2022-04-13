@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.7+commit.e28d00a7"
+		"version": "0.8.13+commit.abaa5c0e"
 	},
 	"language": "Solidity",
 	"output": {
@@ -163,9 +163,9 @@
 				"name": "MAX_MULTIMINT",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "",
-						"type": "uint256"
+						"type": "uint8"
 					}
 				],
 				"stateMutability": "view",
@@ -176,9 +176,9 @@
 				"name": "MAX_PASS_CARD_PER_WALLET",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "",
-						"type": "uint256"
+						"type": "uint8"
 					}
 				],
 				"stateMutability": "view",
@@ -189,9 +189,9 @@
 				"name": "MAX_PASS_CARD_RESERVED_SUPPLY",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"stateMutability": "view",
@@ -202,9 +202,9 @@
 				"name": "MAX_PASS_CARD_SUPPLY",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"stateMutability": "view",
@@ -215,9 +215,9 @@
 				"name": "MAX_PASS_CARD_WHITELIST_SUPPLY",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"stateMutability": "view",
@@ -228,9 +228,9 @@
 				"name": "MAX_SUPPLY",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"stateMutability": "view",
@@ -241,9 +241,9 @@
 				"name": "MAX_TEAM_CARD_SUPPLY",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"stateMutability": "view",
@@ -254,9 +254,9 @@
 				"name": "MAX_VIP_CARD_PER_WALLET",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "",
-						"type": "uint256"
+						"type": "uint8"
 					}
 				],
 				"stateMutability": "view",
@@ -267,9 +267,9 @@
 				"name": "MAX_VIP_CARD_RESERVED_SUPPLY",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"stateMutability": "view",
@@ -280,9 +280,9 @@
 				"name": "MAX_VIP_CARD_SUPPLY",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"stateMutability": "view",
@@ -293,9 +293,9 @@
 				"name": "MAX_VIP_CARD_WHITELIST_SUPPLY",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"stateMutability": "view",
@@ -364,9 +364,9 @@
 				"name": "allowedPassCardMintCount",
 				"outputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"stateMutability": "view",
@@ -519,25 +519,12 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "count",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"name": "mintCard",
-				"outputs": [],
-				"stateMutability": "payable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "count",
-						"type": "uint256"
-					}
-				],
-				"name": "mintPassCard",
 				"outputs": [],
 				"stateMutability": "payable",
 				"type": "function"
@@ -571,24 +558,6 @@
 				"name": "mintPassCardReservedToAddress",
 				"outputs": [],
 				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "count",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bytes",
-						"name": "signature",
-						"type": "bytes"
-					}
-				],
-				"name": "mintPassCardWhitelist",
-				"outputs": [],
-				"stateMutability": "payable",
 				"type": "function"
 			},
 			{
@@ -638,19 +607,6 @@
 						"type": "uint256"
 					}
 				],
-				"name": "mintVipCard",
-				"outputs": [],
-				"stateMutability": "payable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "count",
-						"type": "uint256"
-					}
-				],
 				"name": "mintVipCardReserved",
 				"outputs": [],
 				"stateMutability": "nonpayable",
@@ -672,24 +628,6 @@
 				"name": "mintVipCardReservedToAddress",
 				"outputs": [],
 				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "count",
-						"type": "uint256"
-					},
-					{
-						"internalType": "bytes",
-						"name": "signature",
-						"type": "bytes"
-					}
-				],
-				"name": "mintVipCardWhitelist",
-				"outputs": [],
-				"stateMutability": "payable",
 				"type": "function"
 			},
 			{
@@ -842,9 +780,9 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "maxSupply",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"name": "setMaxPassCardWhitelistSupply",
@@ -855,9 +793,9 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint16",
 						"name": "maxSupply",
-						"type": "uint256"
+						"type": "uint16"
 					}
 				],
 				"name": "setMaxVipCardWhitelistSupply",
@@ -868,9 +806,9 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "maxMultiMint",
-						"type": "uint256"
+						"type": "uint8"
 					}
 				],
 				"name": "setMultiMint",
@@ -894,9 +832,9 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "maxPerWallet",
-						"type": "uint256"
+						"type": "uint8"
 					}
 				],
 				"name": "setPassCardLimitPerWallet",
@@ -933,9 +871,9 @@
 			{
 				"inputs": [
 					{
-						"internalType": "uint256",
+						"internalType": "uint8",
 						"name": "maxPerWallet",
-						"type": "uint256"
+						"type": "uint8"
 					}
 				],
 				"name": "setVipCardLimitPerWallet",
@@ -1214,7 +1152,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"contracts/EventDao.sol": "EventDAO"
+			"contracts/EventDAO.sol": "EventDAO"
 		},
 		"evmVersion": "london",
 		"libraries": {},
@@ -1365,19 +1303,19 @@
 			]
 		},
 		"contracts/EIP712Whitelisting.sol": {
-			"keccak256": "0x8b24ceb938b535c2440cc8a61632a6720bf69a80819a2f5333823fe450313ca9",
+			"keccak256": "0x596888513ee1120c2d4c482ab7f2536bd7cee7d2719d7d0ae13d65208d9a3de7",
 			"license": "Unlicense",
 			"urls": [
-				"bzz-raw://4d7a7999c5bbf2e8d553205a494a0386bf6c4efad9d8814fad12842d63077695",
-				"dweb:/ipfs/QmXLMCxsUuTUuDpPcVGmEuEcB5q18Kwg5i3B7Qic51hP2K"
+				"bzz-raw://2453c0a7c0ff27fd10fde5eed81bcb36b88c312571743f6abe774335311863fd",
+				"dweb:/ipfs/QmVXMhRsqeFyWyHgDvdvGxQsKk9xtxmjNtjAGUrsjZD6QZ"
 			]
 		},
-		"contracts/EventDao.sol": {
-			"keccak256": "0x5249be08ebf580c3e0cd9315e08b53ab116ab75596e9fbba9d0777cc95b8eb4a",
+		"contracts/EventDAO.sol": {
+			"keccak256": "0x8034ea6258a5546340aff06e5698d461b2c1f1eba440922c70bf559cc104c162",
 			"license": "UNLICENSED",
 			"urls": [
-				"bzz-raw://6a1663908007fed29bbe56a8a9a17766dfea2550f9dfb017f4129af406acb436",
-				"dweb:/ipfs/QmcwudP4zp5PjKL7pVJDq9JBQmuau25ZW3qpHjdEeqDqNn"
+				"bzz-raw://27c697460a2d39314ad0b14f7fb553d00af0e2f27f0004a9bf91202c1f5cbf77",
+				"dweb:/ipfs/QmTpVy5J91pXytPZmX5XZMbrJWp716XBvWDYFpwbJJKpcG"
 			]
 		}
 	},
