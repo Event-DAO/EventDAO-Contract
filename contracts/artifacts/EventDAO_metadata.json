@@ -1,6 +1,6 @@
 {
 	"compiler": {
-		"version": "0.8.13+commit.abaa5c0e"
+		"version": "0.8.7+commit.e28d00a7"
 	},
 	"language": "Solidity",
 	"output": {
@@ -1061,6 +1061,19 @@
 			},
 			{
 				"inputs": [],
+				"name": "totalSupply",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
 				"name": "totalVipCardReservedSupply",
 				"outputs": [
 					{
@@ -1194,15 +1207,6 @@
 			"methods": {
 				"MAX_PASS_CARD_PER_WALLET()": {
 					"notice": "MINTING *"
-				},
-				"checkWhitelist(bytes)": {
-					"notice": "WHITELIST *"
-				},
-				"mintPassCard(uint256)": {
-					"notice": "MINTING *"
-				},
-				"release(address)": {
-					"notice": "PAYOUT *"
 				}
 			},
 			"version": 1
@@ -1352,7 +1356,7 @@
 				"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
 			]
 		},
-		"@openzeppelin/utils/math/SafeMath.sol": {
+		"@openzeppelin/contracts/utils/math/SafeMath.sol": {
 			"keccak256": "0xa2f576be637946f767aa56601c26d717f48a0aff44f82e46f13807eea1009a21",
 			"license": "MIT",
 			"urls": [
@@ -1361,19 +1365,19 @@
 			]
 		},
 		"contracts/EIP712Whitelisting.sol": {
-			"keccak256": "0x8c76539ff8660977cea73fdf494ddad7f6432578b8627ab267e6f413b5681973",
+			"keccak256": "0x8b24ceb938b535c2440cc8a61632a6720bf69a80819a2f5333823fe450313ca9",
 			"license": "Unlicense",
 			"urls": [
-				"bzz-raw://7c888f4c16a4f2672808fe99fd129e14d856c5f7e5ca26a74d885184aa3ce872",
-				"dweb:/ipfs/QmfNSnEv5EeCtQM7MFne7j8QjaX7fpYaoA4mKrKZ96RfwD"
+				"bzz-raw://4d7a7999c5bbf2e8d553205a494a0386bf6c4efad9d8814fad12842d63077695",
+				"dweb:/ipfs/QmXLMCxsUuTUuDpPcVGmEuEcB5q18Kwg5i3B7Qic51hP2K"
 			]
 		},
 		"contracts/EventDao.sol": {
-			"keccak256": "0x54e14ca3a6bf0f7f940c45f9bb1352605ca54e36ee36e0ccc2e7d3b853651501",
+			"keccak256": "0x5249be08ebf580c3e0cd9315e08b53ab116ab75596e9fbba9d0777cc95b8eb4a",
 			"license": "UNLICENSED",
 			"urls": [
-				"bzz-raw://6503a841b2daa8ba29f54a7d0aa218a9cb3c699d360efffacdb892306cec92e3",
-				"dweb:/ipfs/QmemRG3eUEUg1QDq4Ybdatz5y4vbYPiPMCmAdn41fffztZ"
+				"bzz-raw://6a1663908007fed29bbe56a8a9a17766dfea2550f9dfb017f4129af406acb436",
+				"dweb:/ipfs/QmcwudP4zp5PjKL7pVJDq9JBQmuau25ZW3qpHjdEeqDqNn"
 			]
 		}
 	},

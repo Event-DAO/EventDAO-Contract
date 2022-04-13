@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.1;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -8,9 +8,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/finance/PaymentSplitter.sol";
-import "@openzeppelin/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./EIP712Whitelisting.sol";
-//0.01
+
 contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
   using Counters for Counters.Counter;
   using SafeMath for uint256;
@@ -33,8 +33,7 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
 
   PaymentSplitter private _splitter;
 
-//TODO TEAM kartının adına bakılacak..
-//TODO kart numaraları 1 - Ceo -- 2-101 arası vip Kartlar -- 102-10101 arası passcardlar
+
   constructor (
     string memory tokenName,
     string memory tokenSymbol,
@@ -120,8 +119,6 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     MAX_VIP_CARD_WHITELIST_SUPPLY = maxSupply;
   }
 
-  /** MINTING LIMITS **/
-
   mapping(address => uint256) private passCardMintCountMap;
   mapping(address => uint256) private vipCardMintCountMap;
   uint8 teamCardMintCount;
@@ -142,14 +139,17 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     vipCardMintCountMap[minter] += count;
   }
 
-  /** COUNTERS */
-
   Counters.Counter private passCardSupplyCounter;
   Counters.Counter private passCardReservedSupplyCounter;
   Counters.Counter private vipCardSupplyCounter;
   Counters.Counter private vipCardReservedSupplyCounter;
   Counters.Counter private passCardWhitelistMintCounter;
   Counters.Counter private vipCardWhitelistMintCounter;
+
+
+  function totalSupply()  public view returns (uint256) {
+    return passCardSupplyCounter.current() + vipCardSupplyCounter.current() + teamCardMintCount;
+  }
 
   function totalPassCardSupply() public view returns (uint256) {
     return passCardSupplyCounter.current();
@@ -184,11 +184,10 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     }
   }
 
-  /** MINTING **/
   function mintPassCard(uint256 count) public payable nonReentrant {
     require(stage_ == DaoStage.PASS, "Sale not active");
     require(totalPassCardSupply() + count - 1 < MAX_PASS_CARD_SUPPLY - MAX_PASS_CARD_RESERVED_SUPPLY, "Exceeds max supply");
-    require(count - 1 < MAX_MULTIMINT, "Trying to mint too many at a time");
+    require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
     require(msg.value >= (count==2 ? PASS_CARD_DIS_PRICE : PASS_CARD_PRICE) * count, "Insufficient payment");
 
     if (allowedPassCardMintCount(_msgSender()) > 0) {
@@ -208,7 +207,7 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
   function mintVipCard(uint256 count) public payable nonReentrant {
     require(stage_ == DaoStage.VIP, "Vip Sale not active");
     require(totalVipCardSupply() + count - 1 < MAX_VIP_CARD_SUPPLY - MAX_VIP_CARD_RESERVED_SUPPLY, "Exceeds max supply");
-    require(count - 1 < MAX_MULTIMINT, "Trying to mint too many at a time");
+    require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
     require(msg.value >= VIP_CARD_PRICE , "Insufficient payment");
 
     if (allowedVipCardMintCount(_msgSender()) > 0) {
@@ -277,7 +276,7 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     require(stage_ == DaoStage.WHITELIST_PASS, "Pass Sale not active");
     require(totalPassCardWhitelistMints() + count - 1 < MAX_PASS_CARD_WHITELIST_SUPPLY, "Exceeds whitelist supply");
     require(totalPassCardSupply() < MAX_PASS_CARD_SUPPLY - MAX_PASS_CARD_RESERVED_SUPPLY + count - 1, "Exceeds max supply");
-    require(count - 1 < MAX_MULTIMINT, "Trying to mint too many at a time");
+    require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
     require(msg.value >= (count==2 ? PASS_CARD_DIS_PRICE : PASS_CARD_PRICE) * count, "Insufficient payment");
 
     if (allowedPassCardMintCount(_msgSender()) > 0) {
@@ -299,7 +298,7 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     require(stage_ == DaoStage.WHITELIST_VIP, "VIP Sale not active");
     require(totalVipCardWhitelistMints() + count - 1 < MAX_VIP_CARD_WHITELIST_SUPPLY, "Exceeds whitelist supply");
     require(totalVipCardSupply() < MAX_VIP_CARD_SUPPLY - MAX_VIP_CARD_RESERVED_SUPPLY + count - 1, "Exceeds max supply");
-    require(count - 1 < MAX_MULTIMINT, "Trying to mint too many at a time");
+    require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
     require(msg.value >= VIP_CARD_PRICE * count, "Insufficient payment");
 
     if (allowedVipCardMintCount(_msgSender()) > 0) {
@@ -317,13 +316,9 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     payable(_splitter).transfer(msg.value);
   }
 
-  /** WHITELIST **/
-
   function checkWhitelist(bytes calldata signature) public view requiresWhitelist(signature) returns (bool) {
     return true;
   }
-
-  /** URI HANDLING **/
 
   string private customBaseURI;
 
@@ -338,7 +333,7 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
   function _baseURI() internal view virtual override returns (string memory) {
     return customBaseURI;
   }
-  //enum DaoStage { WHITELIST_VIP, WHITELIST_PASS, VIP, PASS, INACTIVE }
+
   function daoStage() external view virtual returns (DaoStage stage) {
     return stage_;
   }
@@ -352,8 +347,6 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
 
     return activePrice*count;
   }
-
-  /** PAYOUT **/
 
   function release(address payable account) public virtual onlyOwner {
     _splitter.release(account);

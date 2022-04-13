@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.1;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -28,6 +28,10 @@ contract EIP712Whitelisting is Ownable {
         keccak256("Minter(address wallet)");
 
     constructor() {
+        uint chainId;
+        assembly {
+            chainId := chainid()
+        }
         // This should match whats in the client side whitelist signing code
         // https://github.com/msfeldstein/EIP712-whitelisting/blob/main/test/signWhitelist.ts#L12
         DOMAIN_SEPARATOR = keccak256(
@@ -38,7 +42,7 @@ contract EIP712Whitelisting is Ownable {
                 // This should match the domain you set in your client side signing.
                 keccak256(bytes("WhitelistToken")),
                 keccak256(bytes("1")),
-                block.chainid,
+                chainId,
                 address(this)
             )
         );
