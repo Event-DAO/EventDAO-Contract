@@ -32,9 +32,11 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
   uint16 public MAX_VIP_CARD_WHITELIST_SUPPLY;
 
   string private customBaseURI;
+  uint8 teamCardMintCount;
+  mapping(address => uint16) private passCardMintCountMap;
+  mapping(address => uint16) private vipCardMintCountMap;
 
   PaymentSplitter private _splitter;
-
 
   constructor (
     string memory tokenName,
@@ -53,8 +55,8 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     PASS_CARD_PRICE = passCardPrice;
     PASS_CARD_DIS_PRICE = passDisCardPrice;
     VIP_CARD_PRICE = vipCardPrice;
-    MAX_VIP_CARD_PER_WALLET = 30;
-    MAX_PASS_CARD_PER_WALLET = 50;
+    MAX_VIP_CARD_PER_WALLET = 1;
+    MAX_PASS_CARD_PER_WALLET = 2;
 
     MAX_MULTIMINT = 3;
 
@@ -121,10 +123,6 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     MAX_VIP_CARD_WHITELIST_SUPPLY = maxSupply;
   }
 
-  mapping(address => uint16) private passCardMintCountMap;
-  mapping(address => uint16) private vipCardMintCountMap;
-  uint8 teamCardMintCount;
-
   function allowedPassCardMintCount(address minter) public view returns (uint16) {
     return MAX_PASS_CARD_PER_WALLET - passCardMintCountMap[minter];
   }
@@ -147,8 +145,7 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
   Counters.Counter private vipCardReservedSupplyCounter;
   Counters.Counter private passCardWhitelistMintCounter;
   Counters.Counter private vipCardWhitelistMintCounter;
-
-
+  
   function totalSupply()  public view returns (uint256) {
     return passCardSupplyCounter.current() + vipCardSupplyCounter.current() + teamCardMintCount;
   }
@@ -179,74 +176,78 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
 
   function mintCard(uint16 count) public payable nonReentrant {
     require(stage_!=DaoStage.INACTIVE , "STAGE INACTIVE" );
-    if(stage_==DaoStage.PASS) {
-      require(totalPassCardSupply() + count - 1 < MAX_PASS_CARD_SUPPLY - MAX_PASS_CARD_RESERVED_SUPPLY, "Exceeds max supply");
-      require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
-      require(msg.value >= (count==2 ? PASS_CARD_DIS_PRICE * count : PASS_CARD_PRICE) , "Insufficient payment");
 
-      if (allowedPassCardMintCount(_msgSender()) > 0) {
-        updatePassCardMintCount(_msgSender(), count);
-      } else {
-        revert("Minting limit exceeded");
-      }
-    } else if (stage_==DaoStage.VIP) {
-      require(totalVipCardSupply() + count - 1 < MAX_VIP_CARD_SUPPLY - MAX_VIP_CARD_RESERVED_SUPPLY, "Exceeds max supply");
-      require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
-      require(msg.value >= VIP_CARD_PRICE , "Insufficient payment");
+    //STAGE 1 WHITELIST_VIP 1-101
+    if (stage_==DaoStage.WHITELIST_VIP) {
+      require(totalVipCardWhitelistMints() + count - 1 < MAX_VIP_CARD_WHITELIST_SUPPLY, "VipWL: Exceeds whitelist supply");
+      require(totalVipCardSupply() < MAX_VIP_CARD_SUPPLY - MAX_VIP_CARD_RESERVED_SUPPLY + count - 1, "VipWL:Exceeds max supply");
+      require(count - 1 < MAX_MULTIMINT, "VipWL:Exceeds mint limit");
+      require(msg.value >= VIP_CARD_PRICE * count, "VipWL:Insufficient payment");
 
-      if (allowedVipCardMintCount(_msgSender()) > 0) {
+      if (allowedVipCardMintCount(_msgSender()) >= count) {
         updateVipCardMintCount(_msgSender(), count);
       } else {
-        revert("Minting limit exceeded");
-      }
-
-      for (uint256 i = 0; i < count; i++) {
-        vipCardSupplyCounter.increment();
-        _safeMint(_msgSender(), MAX_PASS_CARD_SUPPLY + MAX_VIP_CARD_RESERVED_SUPPLY + totalVipCardSupply());
-      }
-    } else if (stage_==DaoStage.WHITELIST_PASS) {
-      require(totalPassCardWhitelistMints() + count - 1 < MAX_PASS_CARD_WHITELIST_SUPPLY, "Exceeds whitelist supply");
-      require(totalPassCardSupply() < MAX_PASS_CARD_SUPPLY - MAX_PASS_CARD_RESERVED_SUPPLY + count - 1, "Exceeds max supply");
-      require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
-      require(msg.value >= (count==2 ? PASS_CARD_DIS_PRICE * count : PASS_CARD_PRICE) , "Insufficient payment");
-
-      if (allowedPassCardMintCount(_msgSender()) > 0) {
-        updatePassCardMintCount(_msgSender(), count);
-      } else {
-        revert("Minting limit exceeded");
-      }
-
-      for (uint256 i = 0; i < count; i++) {
-        passCardSupplyCounter.increment();
-        passCardWhitelistMintCounter.increment();
-        _safeMint(_msgSender(), MAX_PASS_CARD_RESERVED_SUPPLY + totalPassCardSupply());
-      }
-    } else if (stage_==DaoStage.WHITELIST_VIP) {
-      require(totalVipCardWhitelistMints() + count - 1 < MAX_VIP_CARD_WHITELIST_SUPPLY, "Exceeds whitelist supply");
-      require(totalVipCardSupply() < MAX_VIP_CARD_SUPPLY - MAX_VIP_CARD_RESERVED_SUPPLY + count - 1, "Exceeds max supply");
-      require(count - 1 < MAX_MULTIMINT, "Exceeds mint limit");
-      require(msg.value >= VIP_CARD_PRICE * count, "Insufficient payment");
-
-      if (allowedVipCardMintCount(_msgSender()) > 0) {
-        updateVipCardMintCount(_msgSender(), count);
-      } else {
-        revert("Minting limit exceeded");
+        revert("VipWL:Minting limit exceeded");
       }
 
       for (uint256 i = 0; i < count; i++) {
         vipCardSupplyCounter.increment();
         vipCardWhitelistMintCounter.increment();
-        _safeMint(_msgSender(), MAX_PASS_CARD_SUPPLY + MAX_VIP_CARD_RESERVED_SUPPLY + totalVipCardSupply());
+        _safeMint(_msgSender(), MAX_TEAM_CARD_SUPPLY + MAX_VIP_CARD_RESERVED_SUPPLY + totalVipCardSupply());
       }
-    }
+    } //STAGE 2 VIP
+    else if (stage_==DaoStage.VIP) { 
+      require(totalVipCardSupply() + count - 1 < MAX_VIP_CARD_SUPPLY - MAX_VIP_CARD_RESERVED_SUPPLY, "Vip: Exceeds max supply");
+      require(count - 1 < MAX_MULTIMINT, "Vip: Exceeds mint limit");
+      require(msg.value >= VIP_CARD_PRICE , "Vip: Insufficient payment");
+
+      if (allowedVipCardMintCount(_msgSender()) >= count) {
+        updateVipCardMintCount(_msgSender(), count);
+      } else {
+        revert("Vip: Minting limit exceeded");
+      }
+
+      for (uint256 i = 0; i < count; i++) {
+        vipCardSupplyCounter.increment();
+        _safeMint(_msgSender(), MAX_TEAM_CARD_SUPPLY + MAX_VIP_CARD_RESERVED_SUPPLY + totalVipCardSupply());
+      }
+    } //STAGE 3 PASS WHITELIST
+    else if (stage_==DaoStage.WHITELIST_PASS) {
+      require(totalPassCardWhitelistMints() + count - 1 < MAX_PASS_CARD_WHITELIST_SUPPLY, "PASSWL: Exceeds whitelist supply");
+      require(totalPassCardSupply() < MAX_PASS_CARD_SUPPLY - MAX_PASS_CARD_RESERVED_SUPPLY + count - 1, "PASSWL: Exceeds max supply");
+      require(count - 1 < MAX_MULTIMINT, "PASSWL: Exceeds mint limit");
+      require(msg.value >= (count==2 ? PASS_CARD_DIS_PRICE * count : PASS_CARD_PRICE) , "PASSWL: Insufficient payment");
+
+      if (allowedPassCardMintCount(_msgSender()) >= count) {
+        updatePassCardMintCount(_msgSender(), count);
+      } else {
+        revert("PASSWL: Minting limit exceeded");
+      }
+
+      for (uint256 i = 0; i < count; i++) {
+        passCardSupplyCounter.increment();
+        passCardWhitelistMintCounter.increment();
+        _safeMint(_msgSender(), MAX_TEAM_CARD_SUPPLY + MAX_VIP_CARD_SUPPLY + MAX_PASS_CARD_RESERVED_SUPPLY + totalPassCardSupply());
+      } 
+    }//STAGE 4 PASS
+    else if(stage_==DaoStage.PASS) {
+      require(totalPassCardSupply() + count - 1 < MAX_PASS_CARD_SUPPLY - MAX_PASS_CARD_RESERVED_SUPPLY, "Pass: Exceeds max supply");
+      require(count - 1 < MAX_MULTIMINT, "Pass: Exceeds mint limit");
+      require(msg.value >= (count==2 ? PASS_CARD_DIS_PRICE * count : PASS_CARD_PRICE) , "Pass: Insufficient payment");
+
+      if (allowedPassCardMintCount(_msgSender()) >= count) {
+        updatePassCardMintCount(_msgSender(), count);
+      } else {
+        revert("Pass: Minting limit exceeded");
+      }
+      
+      for (uint256 i = 0; i < count; i++) {
+        passCardSupplyCounter.increment();
+        _safeMint(_msgSender(), MAX_TEAM_CARD_SUPPLY + MAX_VIP_CARD_SUPPLY + MAX_PASS_CARD_RESERVED_SUPPLY + totalPassCardSupply());
+      }
+    }  
     
     payable(_splitter).transfer(msg.value);
-  }
-
-  function mintTeamReserved() external onlyOwner {
-    require(teamCardMintCount < MAX_TEAM_CARD_SUPPLY, "Exceeds max supply");
-    _safeMint(_msgSender(), MAX_TEAM_CARD_SUPPLY);
-    teamCardMintCount++;
   }
 
   function mintTeamReservedtoAddress(address account) external onlyOwner {
@@ -255,30 +256,12 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
     teamCardMintCount++;
   }
 
-  function mintPassCardReserved(uint256 count) external onlyOwner {
-    require(totalPassCardReservedSupply() + count - 1 < MAX_PASS_CARD_RESERVED_SUPPLY, "Exceeds max supply");
-
-    for (uint256 i = 0; i < count; i++) {
-      passCardReservedSupplyCounter.increment();
-      _safeMint(_msgSender(), totalPassCardReservedSupply());
-    }
-  }
-
   function mintPassCardReservedToAddress(uint256 count, address account) external onlyOwner {
     require(totalPassCardReservedSupply() + count - 1 < MAX_PASS_CARD_RESERVED_SUPPLY, "Exceeds max supply");
 
     for (uint256 i = 0; i < count; i++) {
       passCardReservedSupplyCounter.increment();
-      _safeMint(account, totalPassCardReservedSupply());
-    }
-  }
-
-  function mintVipCardReserved(uint256 count) external onlyOwner{
-    require(totalVipCardReservedSupply() + count - 1 < MAX_VIP_CARD_RESERVED_SUPPLY, "Exceeds max supply");
-
-    for (uint256 i = 0; i < count; i++) {
-      vipCardReservedSupplyCounter.increment();
-      _safeMint(_msgSender(), MAX_PASS_CARD_SUPPLY + totalVipCardReservedSupply());
+      _safeMint(account, MAX_TEAM_CARD_SUPPLY + MAX_VIP_CARD_SUPPLY + totalPassCardReservedSupply());
     }
   }
 
@@ -287,7 +270,7 @@ contract EventDAO is ERC721, ReentrancyGuard, Ownable, EIP712Whitelisting {
 
     for (uint256 i = 0; i < count; i++) {
       vipCardReservedSupplyCounter.increment();
-      _safeMint(account, MAX_PASS_CARD_SUPPLY + totalVipCardReservedSupply());
+      _safeMint(account, MAX_TEAM_CARD_SUPPLY + totalVipCardReservedSupply());
     }
   }
 

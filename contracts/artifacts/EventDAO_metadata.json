@@ -535,19 +535,6 @@
 						"internalType": "uint256",
 						"name": "count",
 						"type": "uint256"
-					}
-				],
-				"name": "mintPassCardReserved",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "count",
-						"type": "uint256"
 					},
 					{
 						"internalType": "address",
@@ -580,13 +567,6 @@
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "mintTeamReserved",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"inputs": [
 					{
 						"internalType": "address",
@@ -595,19 +575,6 @@
 					}
 				],
 				"name": "mintTeamReservedtoAddress",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "uint256",
-						"name": "count",
-						"type": "uint256"
-					}
-				],
-				"name": "mintVipCardReserved",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -1311,11 +1278,11 @@
 			]
 		},
 		"contracts/EventDAO.sol": {
-			"keccak256": "0x8034ea6258a5546340aff06e5698d461b2c1f1eba440922c70bf559cc104c162",
+			"keccak256": "0xc0264b73236827234d935ed66985ab7e3f58bc4d6231b3f864605a6bb2684269",
 			"license": "UNLICENSED",
 			"urls": [
-				"bzz-raw://27c697460a2d39314ad0b14f7fb553d00af0e2f27f0004a9bf91202c1f5cbf77",
-				"dweb:/ipfs/QmTpVy5J91pXytPZmX5XZMbrJWp716XBvWDYFpwbJJKpcG"
+				"bzz-raw://f9fd9bb149a93f4fc73e4bf145f8ba3531ec727f71a67feff3621229e8b1b369",
+				"dweb:/ipfs/QmZnZrnLpXjrLC598fU4bTvnHKs6FSudZa52zkqurJKd29"
 			]
 		}
 	},
